@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お申し込み確認 | GENERALIST DAY</title>
+<meta name="description" content="GENERALIST DAYの申し込みフォームです。必要事項を入力してLINE登録に進んでください。">
+<style>
+  :root {
+    --primary: #1a1a2e;
+    --accent: #2743e3;
+    --line-green: #06c755;
+    --line-green-dark: #05a847;
+    --bg: #f7f8fa;
+    --card: #ffffff;
+    --text: #1a1a2e;
+    --text-sub: #5a5a6e;
+    --border: #dde1e7;
+    --error: #e5484d;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "BIZ UDPGothic", Meiryo, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header .logo { font-weight: 700; font-size: 1.05rem; letter-spacing: .04em; }
+  header a.back-link { color: #d5d7e4; text-decoration: none; font-size: .85rem; }
+  header a.back-link:hover { color: #fff; }
+
+  .apply {
+    max-width: 560px;
+    margin: 48px auto 80px;
+    padding: 0 20px;
+  }
+  .selected-date {
+    background: #eef1ff;
+    border: 1px solid #b9c2f5;
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: .92rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  .selected-date.show { display: flex; }
+  .no-date-note {
+    background: #fff8e6;
+    border: 1px solid #f2ddaa;
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: .85rem;
+    color: #8a6a12;
+    display: none;
+  }
+  .no-date-note.show { display: block; }
+  .apply-card {
+    background: var(--card);
+    border-radius: 18px;
+    box-shadow: 0 6px 28px rgba(26,26,46,.10);
+    padding: 36px 28px;
+  }
+  .apply-card h2 {
+    text-align: center;
+    font-size: 1.4rem;
+    margin-bottom: 6px;
+  }
+  .apply-card .lead {
+    text-align: center;
+    font-size: .9rem;
+    color: var(--text-sub);
+    margin-bottom: 26px;
+  }
+  .field { margin-bottom: 20px; }
+  .field label {
+    display: block;
+    font-weight: 700;
+    font-size: .92rem;
+    margin-bottom: 6px;
+  }
+  .field label .req {
+    display: inline-block;
+    background: var(--error);
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+    vertical-align: 2px;
+  }
+  .field input, .field select {
+    width: 100%;
+    padding: 13px 14px;
+    font-size: 1rem;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--text);
+    transition: border-color .2s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .field select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5a6e' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+  }
+  .field input:focus, .field select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .field.invalid input, .field.invalid select { border-color: var(--error); }
+  .field .error-msg {
+    display: none;
+    color: var(--error);
+    font-size: .8rem;
+    margin-top: 5px;
+  }
+  .field.invalid .error-msg { display: block; }
+
+  .line-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: #eefbf3;
+    border: 1px solid #bfeccf;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: .82rem;
+    color: #1f5c37;
+    margin-bottom: 22px;
+  }
+
+  .btn-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    background: var(--line-green);
+    color: #fff;
+    border: none;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 1.08rem;
+    padding: 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background .2s, transform .15s;
+    box-shadow: 0 5px 16px rgba(6,199,85,.35);
+  }
+  .btn-line:hover { background: var(--line-green-dark); transform: translateY(-1px); }
+  .btn-line svg { flex-shrink: 0; }
+  .privacy {
+    text-align: center;
+    font-size: .75rem;
+    color: var(--text-sub);
+    margin-top: 14px;
+  }
+
+  footer {
+    background: var(--primary);
+    color: #b9bccb;
+    text-align: center;
+    font-size: .8rem;
+    padding: 26px 20px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">GENERALIST DAY</div>
+  <a class="back-link" href="index.html#dates">← 日程を選び直す</a>
+</header>
+
+<section class="apply" id="apply">
+  <div class="selected-date" id="selected-date"></div>
+  <div class="no-date-note" id="no-date-note">
+    日程が選択されていません。<a href="index.html#dates" style="color:#8a6a12;font-weight:700;">日程選択ページ</a>から選び直してください。
+  </div>
+
+  <div class="apply-card">
+    <h2>参加申し込み</h2>
+    <p class="lead">以下をすべて入力すると、LINE登録に進めます。</p>
+
+    <form id="apply-form" novalidate>
+      <input type="hidden" id="event-date" name="event-date" value="">
+
+      <div class="field" id="field-university">
+        <label for="university">大学名<span class="req">必須</span></label>
+        <input type="text" id="university" name="university" placeholder="例：〇〇大学" autocomplete="organization" required>
+        <p class="error-msg">大学名を入力してください。</p>
+      </div>
+
+      <div class="field" id="field-faculty">
+        <label for="faculty">学部<span class="req">必須</span></label>
+        <input type="text" id="faculty" name="faculty" placeholder="例：経済学部" required>
+        <p class="error-msg">学部を入力してください。</p>
+      </div>
+
+      <div class="field" id="field-grade">
+        <label for="grade">学年<span class="req">必須</span></label>
+        <select id="grade" name="grade" required>
+          <option value="" selected disabled>選択してください</option>
+          <option value="1年">1年</option>
+          <option value="2年">2年</option>
+          <option value="3年">3年</option>
+          <option value="4年">4年</option>
+          <option value="修士">修士（大学院）</option>
+          <option value="博士">博士（大学院）</option>
+          <option value="その他">その他</option>
+        </select>
+        <p class="error-msg">学年を選択してください。</p>
+      </div>
+
+      <div class="field" id="field-email">
+        <label for="email">メールアドレス<span class="req">必須</span></label>
+        <input type="email" id="email" name="email" placeholder="例：taro@example.com" autocomplete="email" required>
+        <p class="error-msg">正しいメールアドレスを入力してください。</p>
+      </div>
+
+      <div class="line-note">
+        <span>✅</span>
+        <span>送信ボタンを押すと、公式LINEの友だち追加ページが開きます。LINE登録をもって申し込み完了となります。</span>
+      </div>
+
+      <button type="submit" class="btn-line">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 2C6.48 2 2 5.64 2 10.13c0 4.03 3.58 7.4 8.42 8.04.33.07.77.22.89.5.1.26.07.66.03.92l-.14.86c-.04.26-.2 1.02.89.56 1.1-.46 5.92-3.49 8.08-5.97C21.66 13.31 22 11.79 22 10.13 22 5.64 17.52 2 12 2z" fill="#fff"/>
+        </svg>
+        入力してLINE登録に進む
+      </button>
+
+      <p class="privacy">ご入力いただいた情報は、コミュニティ運営の目的以外には使用しません。</p>
+    </form>
+  </div>
+</section>
+
+<footer>
+  © 一般社団法人ユースキャリア教育機構
+</footer>
+
+<script>
+  // ============================================================
+  // ★ 設定：ここを書き換えてください
+  // ------------------------------------------------------------
+  // LINE_URL: 公式LINEの「友だち追加」URL（LINE Official Account
+  //   Manager の「友だち追加ガイド」からコピーできる https://lin.ee/... 形式）
+  // FORM_ENDPOINT: 入力内容（日程・大学・学部・学年・メール）を記録したい場合、
+  //   Formspree や Google Apps Script などの送信先URLを設定します。
+  //   空文字("")のままなら記録せず、入力チェックのみ行ってLINEへ進みます。
+  // ============================================================
+  const LINE_URL = "https://lin.ee/XXXXXXX"; // ← 公式LINEのURLに置き換え
+  const FORM_ENDPOINT = "";
+
+  // index.html から引き継いだ日程（?vol=1〜3）を表示・保持
+  const EVENT_DATES = {
+    "1": "7月12日（日）13:00–17:00",
+    "2": "7月19日（日）13:00–17:00",
+    "3": "7月26日（日）13:00–17:00",
+  };
+
+  const params = new URLSearchParams(window.location.search);
+  const vol = params.get("vol");
+  const selectedDateEl = document.getElementById("selected-date");
+  const noDateNoteEl = document.getElementById("no-date-note");
+  const eventDateInput = document.getElementById("event-date");
+
+  if (vol && EVENT_DATES[vol]) {
+    eventDateInput.value = EVENT_DATES[vol];
+    selectedDateEl.textContent = "選択中の日程：" + EVENT_DATES[vol];
+    selectedDateEl.classList.add("show");
+  } else {
+    noDateNoteEl.classList.add("show");
+  }
+
+  const form = document.getElementById("apply-form");
+
+  const fields = [
+    { id: "university", wrap: "field-university", validate: v => v.trim().length > 0 },
+    { id: "faculty",    wrap: "field-faculty",    validate: v => v.trim().length > 0 },
+    { id: "grade",      wrap: "field-grade",      validate: v => v !== "" },
+    { id: "email",      wrap: "field-email",      validate: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) },
+  ];
+
+  // 入力し直したらエラー表示を消す
+  fields.forEach(f => {
+    const el = document.getElementById(f.id);
+    el.addEventListener("input", () => {
+      if (f.validate(el.value)) {
+        document.getElementById(f.wrap).classList.remove("invalid");
+      }
+    });
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    // 必須項目チェック：全て入力されるまでLINEへは進めない
+    let firstInvalid = null;
+    fields.forEach(f => {
+      const el = document.getElementById(f.id);
+      const wrap = document.getElementById(f.wrap);
+      if (!f.validate(el.value)) {
+        wrap.classList.add("invalid");
+        if (!firstInvalid) firstInvalid = el;
+      } else {
+        wrap.classList.remove("invalid");
+      }
+    });
+
+    if (firstInvalid) {
+      firstInvalid.focus();
+      firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    // 任意：入力内容を送信先に記録（FORM_ENDPOINT 設定時のみ）
+    if (FORM_ENDPOINT) {
+      try {
+        await fetch(FORM_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            eventDate: eventDateInput.value,
+            university: document.getElementById("university").value.trim(),
+            faculty: document.getElementById("faculty").value.trim(),
+            grade: document.getElementById("grade").value,
+            email: document.getElementById("email").value.trim(),
+            submittedAt: new Date().toISOString(),
+          }),
+        });
+      } catch (err) {
+        // 記録に失敗してもLINE登録には進めるようにする
+        console.error("フォーム送信エラー:", err);
+      }
+    }
+
+    // LINEの友だち追加ページへ
+    window.location.href = LINE_URL;
+  });
+</script>
+
+</body>
+</html>
