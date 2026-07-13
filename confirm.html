@@ -169,12 +169,33 @@
     box-shadow: 0 5px 16px rgba(6,199,85,.35);
   }
   .btn-line:hover { background: var(--line-green-dark); transform: translateY(-1px); }
+  .btn-line:disabled { opacity: .6; cursor: not-allowed; transform: none; }
   .btn-line svg { flex-shrink: 0; }
+  a.btn-line { text-decoration: none; }
   .privacy {
     text-align: center;
     font-size: .75rem;
     color: var(--text-sub);
     margin-top: 14px;
+  }
+
+  .complete-panel {
+    display: none;
+    text-align: center;
+  }
+  .complete-panel.show { display: block; }
+  .complete-check {
+    font-size: 2.4rem;
+    margin-bottom: 10px;
+  }
+  .complete-panel h2 {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+  }
+  .complete-panel .lead {
+    font-size: .9rem;
+    color: var(--text-sub);
+    margin-bottom: 22px;
   }
 
   footer {
@@ -241,18 +262,31 @@
 
       <div class="line-note">
         <span>✅</span>
-        <span>送信ボタンを押すと、公式LINEの友だち追加ページが開きます。LINE登録をもって申し込み完了となります。</span>
+        <span>送信すると申し込みが完了し、そのあと公式LINEの友だち追加ページへご案内します。</span>
       </div>
 
-      <button type="submit" class="btn-line">
+      <button type="submit" class="btn-line" id="submit-btn">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M12 2C6.48 2 2 5.64 2 10.13c0 4.03 3.58 7.4 8.42 8.04.33.07.77.22.89.5.1.26.07.66.03.92l-.14.86c-.04.26-.2 1.02.89.56 1.1-.46 5.92-3.49 8.08-5.97C21.66 13.31 22 11.79 22 10.13 22 5.64 17.52 2 12 2z" fill="#fff"/>
         </svg>
-        入力してLINE登録に進む
+        <span id="submit-btn-label">申し込む</span>
       </button>
 
       <p class="privacy">ご入力いただいた情報は、コミュニティ運営の目的以外には使用しません。</p>
     </form>
+
+    <div class="complete-panel" id="complete-panel">
+      <div class="complete-check">✅</div>
+      <h2>申し込みが完了しました</h2>
+      <p class="lead">続けて、公式LINEの友だち追加ページへ進んでください。LINE登録をもって参加確定となります。</p>
+      <a class="btn-line" id="line-link" href="#">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 2C6.48 2 2 5.64 2 10.13c0 4.03 3.58 7.4 8.42 8.04.33.07.77.22.89.5.1.26.07.66.03.92l-.14.86c-.04.26-.2 1.02.89.56 1.1-.46 5.92-3.49 8.08-5.97C21.66 13.31 22 11.79 22 10.13 22 5.64 17.52 2 12 2z" fill="#fff"/>
+        </svg>
+        公式LINEで友だち追加する
+      </a>
+      <p class="privacy" id="auto-redirect-note">まもなく自動でLINEのページに移動します。</p>
+    </div>
   </div>
 </section>
 
@@ -314,6 +348,11 @@
   }
 
   const form = document.getElementById("apply-form");
+  const submitBtn = document.getElementById("submit-btn");
+  const submitBtnLabel = document.getElementById("submit-btn-label");
+  const completePanel = document.getElementById("complete-panel");
+  const lineLink = document.getElementById("line-link");
+  lineLink.href = LINE_URL;
 
   const fields = [
     { id: "university", wrap: "field-university", validate: v => v.trim().length > 0 },
@@ -354,7 +393,11 @@
       return;
     }
 
+    submitBtn.disabled = true;
+    submitBtnLabel.textContent = "送信中…";
+
     // 任意：入力内容を送信先に記録（FORM_ENDPOINT 設定時のみ）
+    // ここで完了を待ってから次の画面に進めることで、「申し込み完了 → LINE案内」の順序を保証する
     if (FORM_ENDPOINT) {
       const payload = JSON.stringify({
         eventDate: eventDateInput.value,
@@ -365,32 +408,31 @@
         submittedAt: new Date().toISOString(),
       });
 
-      // sendBeacon はこの直後の画面遷移（LINEへのリダイレクト）に巻き込まれて
-      // 通信が打ち切られることがないよう設計されているため、まずこちらを試す
-      let sent = false;
-      if (navigator.sendBeacon) {
-        const blob = new Blob([payload], { type: "text/plain;charset=utf-8" });
-        sent = navigator.sendBeacon(FORM_ENDPOINT, blob);
-      }
-
-      if (!sent) {
-        try {
-          await fetch(FORM_ENDPOINT, {
+      try {
+        // 通信が長引いて画面が固まったままにならないよう、8秒でタイムアウトして先へ進める
+        await Promise.race([
+          fetch(FORM_ENDPOINT, {
             method: "POST",
             mode: "no-cors",
             keepalive: true,
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: payload,
-          });
-        } catch (err) {
-          // 記録に失敗してもLINE登録には進めるようにする
-          console.error("フォーム送信エラー:", err);
-        }
+          }),
+          new Promise((resolve) => setTimeout(resolve, 8000)),
+        ]);
+      } catch (err) {
+        // 記録に失敗しても申し込み自体は完了扱いとしてLINE登録に進めるようにする
+        console.error("フォーム送信エラー:", err);
       }
     }
 
-    // LINEの友だち追加ページへ
-    window.location.href = LINE_URL;
+    // 申し込み完了を表示してから、公式LINEの友だち追加ページへ案内する
+    form.style.display = "none";
+    completePanel.classList.add("show");
+    completePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => {
+      window.location.href = LINE_URL;
+    }, 1500);
   });
 </script>
 
