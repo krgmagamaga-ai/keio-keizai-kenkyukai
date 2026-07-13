@@ -354,6 +354,63 @@
   const lineLink = document.getElementById("line-link");
   lineLink.href = LINE_URL;
 
+  // 入力内容を送信先（Google Apps Script など）へ記録する。
+  // fetch(no-cors) は「リクエストは飛ぶが記録されたか判別できず、直後のページ遷移で
+  // 打ち切られることもある」ため、ここでは "隠しフォーム → 隠しiframe" へ POST する。
+  // これはブラウザの通常のフォーム送信なので CORS プリフライトが発生せず、
+  // Apps Script のリダイレクトも iframe が完結させてくれるため最も確実に doPost が実行される。
+  function sendToSheet(endpoint, dataObj) {
+    return new Promise((resolve) => {
+      const name = "sheet_sink_" + Date.now();
+      const iframe = document.createElement("iframe");
+      iframe.name = name;
+      iframe.style.display = "none";
+
+      const f = document.createElement("form");
+      f.action = endpoint;
+      f.method = "POST";
+      f.target = name;
+      f.style.display = "none";
+      // enctype は既定の application/x-www-form-urlencoded（＝シンプルリクエスト）
+
+      Object.keys(dataObj).forEach((key) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = dataObj[key] == null ? "" : String(dataObj[key]);
+        f.appendChild(input);
+      });
+
+      document.body.appendChild(iframe);
+      document.body.appendChild(f);
+
+      let settled = false;
+      const settle = () => {
+        if (settled) return;
+        settled = true;
+        setTimeout(() => {
+          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+          if (f.parentNode) f.parentNode.removeChild(f);
+        }, 0);
+        resolve();
+      };
+
+      // 応答速度に依存せず確実に記録するため、
+      //  ・最低待機時間（floor）: iframe への POST が裏で完了するのを待つ
+      //  ・load イベント: 応答が返ってきた合図（floor 経過後のみ完了とみなす）
+      //  ・上限キャップ: 応答が無くても固まらないよう一定時間で先へ進む
+      let loaded = false;
+      let floorPassed = false;
+      const maybeSettle = () => { if (loaded && floorPassed) settle(); };
+
+      iframe.addEventListener("load", () => { loaded = true; maybeSettle(); });
+      setTimeout(() => { floorPassed = true; maybeSettle(); }, 1600);
+      setTimeout(settle, 8000);
+
+      f.submit();
+    });
+  }
+
   const fields = [
     { id: "university", wrap: "field-university", validate: v => v.trim().length > 0 },
     { id: "faculty",    wrap: "field-faculty",    validate: v => v.trim().length > 0 },
@@ -397,29 +454,18 @@
     submitBtnLabel.textContent = "送信中…";
 
     // 任意：入力内容を送信先に記録（FORM_ENDPOINT 設定時のみ）
-    // ここで完了を待ってから次の画面に進めることで、「申し込み完了 → LINE案内」の順序を保証する
+    // ここで送信の完了を待ってから次の画面に進めることで、
+    // 「申し込み完了 → LINE案内」の順序と、記録の確実性を両立する
     if (FORM_ENDPOINT) {
-      const payload = JSON.stringify({
-        eventDate: eventDateInput.value,
-        university: document.getElementById("university").value.trim(),
-        faculty: document.getElementById("faculty").value.trim(),
-        grade: document.getElementById("grade").value,
-        email: document.getElementById("email").value.trim(),
-        submittedAt: new Date().toISOString(),
-      });
-
       try {
-        // 通信が長引いて画面が固まったままにならないよう、8秒でタイムアウトして先へ進める
-        await Promise.race([
-          fetch(FORM_ENDPOINT, {
-            method: "POST",
-            mode: "no-cors",
-            keepalive: true,
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: payload,
-          }),
-          new Promise((resolve) => setTimeout(resolve, 8000)),
-        ]);
+        await sendToSheet(FORM_ENDPOINT, {
+          eventDate: eventDateInput.value,
+          university: document.getElementById("university").value.trim(),
+          faculty: document.getElementById("faculty").value.trim(),
+          grade: document.getElementById("grade").value,
+          email: document.getElementById("email").value.trim(),
+          submittedAt: new Date().toISOString(),
+        });
       } catch (err) {
         // 記録に失敗しても申し込み自体は完了扱いとしてLINE登録に進めるようにする
         console.error("フォーム送信エラー:", err);
