@@ -356,22 +356,36 @@
 
     // 任意：入力内容を送信先に記録（FORM_ENDPOINT 設定時のみ）
     if (FORM_ENDPOINT) {
-      try {
-        await fetch(FORM_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            eventDate: eventDateInput.value,
-            university: document.getElementById("university").value.trim(),
-            faculty: document.getElementById("faculty").value.trim(),
-            grade: document.getElementById("grade").value,
-            email: document.getElementById("email").value.trim(),
-            submittedAt: new Date().toISOString(),
-          }),
-        });
-      } catch (err) {
-        // 記録に失敗してもLINE登録には進めるようにする
-        console.error("フォーム送信エラー:", err);
+      const payload = JSON.stringify({
+        eventDate: eventDateInput.value,
+        university: document.getElementById("university").value.trim(),
+        faculty: document.getElementById("faculty").value.trim(),
+        grade: document.getElementById("grade").value,
+        email: document.getElementById("email").value.trim(),
+        submittedAt: new Date().toISOString(),
+      });
+
+      // sendBeacon はこの直後の画面遷移（LINEへのリダイレクト）に巻き込まれて
+      // 通信が打ち切られることがないよう設計されているため、まずこちらを試す
+      let sent = false;
+      if (navigator.sendBeacon) {
+        const blob = new Blob([payload], { type: "text/plain;charset=utf-8" });
+        sent = navigator.sendBeacon(FORM_ENDPOINT, blob);
+      }
+
+      if (!sent) {
+        try {
+          await fetch(FORM_ENDPOINT, {
+            method: "POST",
+            mode: "no-cors",
+            keepalive: true,
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: payload,
+          });
+        } catch (err) {
+          // 記録に失敗してもLINE登録には進めるようにする
+          console.error("フォーム送信エラー:", err);
+        }
       }
     }
 
