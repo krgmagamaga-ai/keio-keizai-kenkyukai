@@ -707,22 +707,22 @@
     <h2>参加したい日程を選んでください</h2>
 
     <div class="tickets" role="radiogroup" aria-label="参加日程の選択">
-      <button type="button" class="ticket" data-date="7月12日（日）" data-vol="1" role="radio" aria-checked="false">
+      <button type="button" class="ticket" data-vol="1" role="radio" aria-checked="false">
         <span class="t-badge">選択中</span>
         <div class="t-label">SUNDAY / VOL.1</div>
-        <div class="t-date serif">7/12<small>（日）</small></div>
+        <div class="t-date serif"></div>
         <div class="t-info">13:00–17:00｜オリンピックセンター</div>
       </button>
-      <button type="button" class="ticket" data-date="7月19日（日）" data-vol="2" role="radio" aria-checked="false">
+      <button type="button" class="ticket" data-vol="2" role="radio" aria-checked="false">
         <span class="t-badge">選択中</span>
         <div class="t-label">SUNDAY / VOL.2</div>
-        <div class="t-date serif">7/19<small>（日）</small></div>
+        <div class="t-date serif"></div>
         <div class="t-info">13:00–17:00｜オリンピックセンター</div>
       </button>
-      <button type="button" class="ticket" data-date="7月26日（日）" data-vol="3" role="radio" aria-checked="false">
+      <button type="button" class="ticket" data-vol="3" role="radio" aria-checked="false">
         <span class="t-badge">選択中</span>
         <div class="t-label">SUNDAY / VOL.3</div>
-        <div class="t-date serif">7/26<small>（日）</small></div>
+        <div class="t-date serif"></div>
         <div class="t-info">13:00–17:00｜オリンピックセンター</div>
       </button>
     </div>
@@ -815,6 +815,32 @@
 </div>
 
 <script>
+  // 開催日：最短2026年8月9日（日）スタート、以後1週間ごとに自動で繰り上がる3日程を表示
+  function getEventDates() {
+    const DAY = 24 * 60 * 60 * 1000;
+    const base = new Date(2026, 7, 9); // 8月9日（日）
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let weeksAhead = 0;
+    if (today > base) {
+      weeksAhead = Math.ceil((today - base) / (7 * DAY));
+    }
+    const dates = [];
+    for (let i = 0; i < 3; i++) {
+      dates.push(new Date(base.getTime() + (weeksAhead + i) * 7 * DAY));
+    }
+    return dates;
+  }
+
+  const eventDates = getEventDates();
+  document.querySelectorAll(".ticket").forEach((t, i) => {
+    const d = eventDates[i];
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    t.dataset.date = m + "月" + day + "日（日）";
+    t.querySelector(".t-date").innerHTML = m + "/" + day + "<small>（日）</small>";
+  });
+
   const tickets = document.querySelectorAll(".ticket");
   const echo = document.getElementById("selected-echo");
   const cta = document.getElementById("next-cta");
