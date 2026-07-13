@@ -17,7 +17,7 @@
 
 ```js
 const LINE_URL = "https://lin.ee/Nj88fS3";
-const FORM_ENDPOINT = "";
+const FORM_ENDPOINT = "https://script.google.com/macros/s/AKfycbxnMmwxCzL8wTMKEgFiFYI1QGAQALpqc9caJNyGdm0zWYVuU-0dn3OSZC5J07LRHil3/exec";
 ```
 
 ### LINE_URL（設定済み）
