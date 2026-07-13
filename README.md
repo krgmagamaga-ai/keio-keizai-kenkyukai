@@ -16,22 +16,31 @@
 `confirm.html` の下部にある `<script>` 内の設定を書き換えてください。
 
 ```js
-const LINE_URL = "https://lin.ee/XXXXXXX"; // ← 公式LINEの友だち追加URLに置き換え
+const LINE_URL = "https://lin.ee/Nj88fS3";
 const FORM_ENDPOINT = "";
 ```
 
-### LINE_URL（必須）
+### LINE_URL（設定済み）
 
-公式LINEの「友だち追加URL」に置き換えてください。
+公式LINEの友だち追加URL `https://lin.ee/Nj88fS3` を設定済みです。
 
-1. [LINE Official Account Manager](https://manager.line.biz/) にログイン
-2. 「友だちを増やす」→「友だち追加ガイド」
-3. 「URLを作成」でコピーした `https://lin.ee/...` のURLを貼り付け
+### FORM_ENDPOINT（スプレッドシート連携）
 
-### FORM_ENDPOINT（任意）
+申し込み内容（日程・大学・学部・学年・メール）を下記スプレッドシートに自動で記録したい場合は、
+Google Apps Script のWebアプリを使います。
 
-入力された大学・学部・学年・メールアドレスを記録したい場合に設定します。
-[Formspree](https://formspree.io/) や Google Apps Script のWebアプリURLなど、POSTを受け付けるURLを指定すると、LINEに移動する前に入力内容がJSONで送信されます。
+対象スプレッドシート: https://docs.google.com/spreadsheets/d/1skAWG9eYUlS3O39gpmXhrvBWXCU7UW6QkAfErlWdeeo/edit
+
+1. 上記スプレッドシートを開き、メニューから「拡張機能」→「Apps Script」を開く
+2. デフォルトの `myFunction` などの中身を消し、このリポジトリの `google-apps-script.gs` の内容を貼り付けて保存
+3. 右上の「デプロイ」→「新しいデプロイ」をクリック
+4. 「種類の選択」で「ウェブアプリ」を選び、以下を設定してデプロイ
+   - 実行するユーザー: 自分
+   - アクセスできるユーザー: 全員
+5. 発行された「ウェブアプリのURL」（`https://script.google.com/macros/s/.../exec`）をコピー
+6. `confirm.html` の `FORM_ENDPOINT` にそのURLを貼り付け
+
+設定すると、申し込みフォーム送信のたびにスプレッドシートへ「送信日時・日程・大学名・学部・学年・メールアドレス」が1行追加されます。
 
 空欄（`""`）のままの場合、入力チェックだけ行い、内容はどこにも保存されません。
 
