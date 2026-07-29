@@ -753,7 +753,7 @@
     <h2>開催概要</h2>
     <table class="info-table">
       <tr><th>イベント名</th><td>Summer 1Day起業（サマー起業ワンデイ）</td></tr>
-      <tr><th>日程</th><td>7月12日（日）／ 7月19日（日）／ 7月26日（日）<br>いずれも 13:00–17:00（12:45 受付開始）</td></tr>
+      <tr><th>日程</th><td><span id="overview-dates">7月12日（日）／ 7月19日（日）／ 7月26日（日）</span><br>いずれも 13:00–17:00（12:45 受付開始）</td></tr>
       <tr><th>会場</th><td>国立オリンピック記念青少年総合センター<br>（小田急線「参宮橋」駅から徒歩約7分／千代田線「代々木公園」駅から徒歩約10分）<br>※詳しい部屋番号は、申込後にLINEでご案内します。</td></tr>
       <tr><th>参加費</th><td>無料</td></tr>
       <tr><th>対象</th><td>「いつか起業したい」と本気で考えている大学生・大学院生（18歳以上）。起業未経験・アイデアなしでも歓迎。所属大学は問わず、他大学からの参加も歓迎します。</td></tr>
@@ -843,6 +843,14 @@
     t.dataset.date = m + "月" + day + "日（日）";
     t.querySelector(".t-date").innerHTML = m + "/" + day + "<small>（日）</small>";
   });
+
+  // 開催概要の日程も、チケットと同じ自動計算の日程に合わせて表示
+  const overviewDates = document.getElementById("overview-dates");
+  if (overviewDates) {
+    overviewDates.textContent = eventDates
+      .map(d => (d.getMonth() + 1) + "月" + d.getDate() + "日（日）")
+      .join("／ ");
+  }
 
   const tickets = document.querySelectorAll(".ticket");
   const echo = document.getElementById("selected-echo");
